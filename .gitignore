@@ -1,0 +1,15 @@
+# Ignore Visual Studio files
+.vs/
+*.user
+*.suo
+
+# Ignore build output
+bin/
+obj/
+
+# Ignore system files
+*.log
+*.tmp
+*.vscode/
+Angular/SportifyKerala/ 
+Angular/SportifyKerala/ 

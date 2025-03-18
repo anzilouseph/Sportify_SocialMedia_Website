@@ -1,0 +1,6 @@
+@SportifyKerala_HostAddress = http://localhost:5036
+
+GET {{SportifyKerala_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
