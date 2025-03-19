@@ -102,7 +102,7 @@ namespace SportifyKerala.Repo
             }
         }
 
-        //if the otp is correct we need to approve the user and delete the otp form th eotp table
+        //if the otp is correct we need to approve the user and delete the otp form the otp table
         public async Task<int> VerifyingUseRemovingOtp(Guid id)
         {
             var updateQuery = "update users set CommitieVerfied=1 where UserId=@id;Delete from OTP where UserId=@id";
