@@ -5,6 +5,9 @@ using SportifyKerala.Dto;
 using SportifyKerala.IRepo;
 using SportifyKerala.Utilitys;
 using SportifyKerala.Models;
+using Org.BouncyCastle.Crypto.Prng;
+using Microsoft.Extensions.Hosting;
+using static Mysqlx.Expect.Open.Types.Condition.Types;
 
 namespace SportifyKerala.Repo
 {
@@ -85,7 +88,7 @@ namespace SportifyKerala.Repo
             }
         }
 
-        //for get al the posts
+        //for get al the posts of every users
         public async Task<APIResponse<IEnumerable<PostToListDto>>> GetAllPost()
         {
             var query = "select * from TournamentPost";
@@ -155,6 +158,37 @@ namespace SportifyKerala.Repo
 
                 }
                 return APIResponse<dynamic>.Success(result, "Success");
+            }
+        }
+
+
+        //for get all the posts of a single user
+        public async Task<APIResponse<IEnumerable<PostToListDto>>> GetPostOfSingleClub(Guid clubId)
+        {
+            var query = "select * from TournamentPost where ClubId=@id";
+            var parameters = new DynamicParameters();
+            parameters.Add("id", clubId);
+            using (var connection = context.CreateConnection())
+            {
+                connection.Open();
+                var result = await connection.QueryAsync<TournamentPost>(query,parameters);
+                connection.Close();
+                if (result.Count() == 0)
+                {
+                    return APIResponse<IEnumerable<PostToListDto>>.Error("No posts to show");
+                }
+                var masked = result.Select(post => new PostToListDto
+                {
+
+                    idofPost = post.PostId,
+                    idOfClub = post.ClubId,
+                    DistrictId = post.DistrictId,
+                    descriptionOfPost = post.Description,
+                    dateOfPost = post.PostDate,
+                    imageName = post.ImageName,
+                });
+
+                return APIResponse<IEnumerable<PostToListDto>>.Success(masked, "Success");
             }
         }
 

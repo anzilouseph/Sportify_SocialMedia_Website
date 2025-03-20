@@ -1,4 +1,5 @@
 ﻿using Dapper;
+using Org.BouncyCastle.Crypto.Prng;
 using SportifyKerala.Context;
 using SportifyKerala.Dto;
 using SportifyKerala.IRepo;
@@ -99,6 +100,43 @@ namespace SportifyKerala.Repo
             }
         }
 
+
+        //nammalk oru aalde post kanumbo avde aale follow cheyyaninfo ellayo, ellenkil aale follow cheyan pattanan poole
+        public async Task<APIResponse<bool>> CheckFollowOrNot(Guid clubid,Guid userid)
+        {
+            var query = "select * from Follow where ClubId=@cid and FollowerId=@uid and Accepeted=1";
+            var parameters = new DynamicParameters();
+            parameters.Add("uid", userid);
+            parameters.Add("cid", clubid);
+            using (var connection = _context.CreateConnection())
+            {
+                connection.Open();
+                var result = await connection.QueryFirstOrDefaultAsync<Follow>(query, parameters);
+                connection.Close();
+                if (result == null)
+                {
+                    return APIResponse<bool>.Error("Not Following");
+                }
+                return APIResponse<bool>.Success(true, "Following");
+            }
+        }
+
+        //oru club nu ethra follow reqs ond enn ariyan veendii
+        public async Task<APIResponse<int>> FollowRequests(Guid clubid)
+        {
+            var query = "select count(*) from Follow where ClubId=@id and Accepeted=0";
+            using (var connection = _context.CreateConnection())
+            {
+                connection.Open();
+                var result = await connection.QueryFirstOrDefaultAsync<int>(query, new {id=clubid});
+                connection.Close();
+                if (result == null)
+                {
+                    return APIResponse<int>.Error("No Follow requests");
+                }
+                return APIResponse<int>.Success(result, "Success");
+            }
+        }
 
 
     }

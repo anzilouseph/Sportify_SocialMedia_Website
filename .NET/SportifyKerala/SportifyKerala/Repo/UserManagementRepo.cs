@@ -1,19 +1,24 @@
 ﻿using System.Data;
+using System.Linq;
 using Dapper;
+using Microsoft.Extensions.Hosting;
 using SportifyKerala.Context;
 using SportifyKerala.Dto;
 using SportifyKerala.IRepo;
 using SportifyKerala.Models;
 using SportifyKerala.Utilitys;
+using static Mysqlx.Expect.Open.Types.Condition.Types;
 
 namespace SportifyKerala.Repo
 {
     public class UserManagementRepo : IUserManagementRepo
     {
         private readonly DapperContext _context;
-        public UserManagementRepo (DapperContext context)
+        private readonly IWebHostEnvironment _env;
+        public UserManagementRepo (DapperContext context, IWebHostEnvironment env)
         {
             _context = context;
+            _env = env;
         }
 
         //for User Registration
@@ -148,6 +153,75 @@ namespace SportifyKerala.Repo
                     return APIResponse<IEnumerable<Districts>>.Error("No districts in the list");
                 }
                 return APIResponse<IEnumerable<Districts>>.Success(result,"No districts in the list");
+            }
+        }
+
+
+        //for update the username of the user
+        public async Task<APIResponse<bool>> UpdateProfileImage(UpdateProfileImageDto proImage, Guid id)
+        {
+            var gettingQuery = "select * from Users where UserId=@id";
+            using (var connection = _context.CreateConnection())
+            {
+                connection.Open();
+                var resut = await connection.QueryFirstOrDefaultAsync<Users>(gettingQuery, new { id = id });
+                connection.Close();
+                if (resut == null)
+                {
+                    return APIResponse<bool>.Error("No user in this id");
+                }
+
+                //image code sytarts here
+                string filePath = string.Empty;
+                string newFileName = string.Empty;
+                if (proImage.image != null)
+                {
+                    var folderPath = Path.Combine(_env.WebRootPath, "Media", "ProfileImage");
+
+
+                    if (!Directory.Exists(folderPath))
+                    {
+                        Directory.CreateDirectory(folderPath);
+                    }
+
+
+                    var fileExtension = Path.GetExtension(proImage.image.FileName).ToLower();
+
+                    var allowedExtensions = new HashSet<string> { ".jpg", ".jpeg", ".png", ".gif" };
+
+                    if (!allowedExtensions.Contains(fileExtension))
+                    {
+                        return APIResponse<bool>.Error("Invalid file type. Only JPG, JPEG, PNG, and GIF are allowed.");
+                    }
+                    newFileName = $"{resut.Email}{fileExtension}";
+                    filePath = Path.Combine(folderPath, newFileName);
+                    if (System.IO.File.Exists(filePath))
+                    {
+                        System.IO.File.Delete(filePath);
+                    }
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await proImage.image.CopyToAsync(stream);
+                    }
+                    Console.WriteLine(proImage.image.FileName);
+                    Console.WriteLine(filePath);
+                    Console.WriteLine(newFileName);
+                }
+                //image code ends here
+                var updateQuery = "update Users set ProfileImage=@image where UserId=@userid";
+                var parameters = new DynamicParameters();
+                parameters.Add("userid", id);
+                parameters.Add("image", newFileName);
+                connection.Open();
+                var rowAffected = await connection.ExecuteAsync(updateQuery, parameters);
+                connection.Close();
+                Console.WriteLine(rowAffected);
+                if(rowAffected == 0)
+                {
+                    return APIResponse<bool>.Error("Unable to update the Image");
+                }
+                return APIResponse<bool>.Success(true,"ProfileImage Updated Successfully");
+
             }
         }
 

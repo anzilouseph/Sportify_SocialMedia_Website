@@ -14,7 +14,7 @@ namespace SportifyKerala.Controllers
         private readonly IPostManagementRepo _repo;
         private readonly IWebHostEnvironment _env;
 
-        public PostManagementController(IPostManagementRepo repo,IWebHostEnvironment env)
+        public PostManagementController(IPostManagementRepo repo, IWebHostEnvironment env)
         {
             _repo = repo;
             _env = env;
@@ -29,7 +29,7 @@ namespace SportifyKerala.Controllers
             try
             {
                 var clubIdClaim = HttpContext.User.FindFirst(JwtRegisteredClaimNames.Sid);
-                if(clubIdClaim == null || !Guid.TryParse(clubIdClaim.Value ,out Guid clubid))
+                if (clubIdClaim == null || !Guid.TryParse(clubIdClaim.Value, out Guid clubid))
                 {
                     return Unauthorized("JWT GENERATION ERROR");
                 }
@@ -112,11 +112,11 @@ namespace SportifyKerala.Controllers
         //for get the name and Image of the club(To see who posted the image)
         [Authorize]
         [HttpGet("GetNameandImage")]
-        public async Task<IActionResult> GetNameandImage(Guid clubid) 
+        public async Task<IActionResult> GetNameandImage(Guid clubid)
         {
             try
             {
-               
+
                 var apiResponse = await _repo.GetNameandImage(clubid);
                 return Ok(apiResponse);
             }
@@ -125,5 +125,29 @@ namespace SportifyKerala.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+
+        //for GetAllPosts of a single user
+        [Authorize]
+        [HttpGet("GetPostOfSingleUser")]
+        public async Task<IActionResult> GetPostOfSingleClub()
+        {
+            try
+            {
+                var clubIdClaim = HttpContext.User.FindFirst(JwtRegisteredClaimNames.Sid);
+                if (clubIdClaim == null || !Guid.TryParse(clubIdClaim.Value, out Guid clubid))
+                {
+                    return Unauthorized("JWT GENERATION ERROR");
+                }
+                Console.WriteLine($"ClubId from token: {clubid}");
+                var apiResponse = await _repo.GetPostOfSingleClub(clubid);
+                return Ok(apiResponse);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+        
     }
 }

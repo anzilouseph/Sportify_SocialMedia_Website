@@ -10,5 +10,6 @@
         public Guid idOfDistrict { get; set; }
         public bool commitie { get; set; }
         public string roleOfUser { get; set; }
+        public string imageName { get; set; }
     }
 }

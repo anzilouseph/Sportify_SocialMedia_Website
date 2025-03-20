@@ -91,6 +91,8 @@ namespace SportifyKerala.Service
                 idOfDistrict = result.DistrictId,
                 commitie = result.CommitieVerfied,
                 roleOfUser = result.Role,
+                imageName = result.ProfileImage,
+                
             };
             return APIResponse<UserToListDto>.Success(masked, "Success");
         }

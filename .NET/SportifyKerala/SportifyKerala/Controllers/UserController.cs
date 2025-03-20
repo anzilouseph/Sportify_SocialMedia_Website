@@ -16,11 +16,13 @@ namespace SportifyKerala.Controllers
     {
         private readonly IUserManagementService _service;
         private readonly IUserManagementRepo _repo;
+        private readonly IWebHostEnvironment _env;
 
-        public UserController(IUserManagementService service, IUserManagementRepo repo)
+        public UserController(IUserManagementService service, IUserManagementRepo repo, IWebHostEnvironment env)
         {
             _service = service;
             _repo = repo;
+            _env = env;
         }
 
 
@@ -103,6 +105,60 @@ namespace SportifyKerala.Controllers
             {
                 var apiResponse = await _repo.GetAllDistricts();
                 return Ok(apiResponse);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+
+        //foe updaet profile Image
+        [HttpPut("UpdateProfileImage")]
+        public async Task<IActionResult> UpdateProfileImage([FromForm]UpdateProfileImageDto proImage)
+        {
+            try
+            {
+                var userIdClaim = HttpContext.User.FindFirst(JwtRegisteredClaimNames.Sid);
+                if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out Guid userid))
+                {
+                    return Unauthorized(APIResponse<bool>.Error("Unable to generate JWT"));
+                }
+                var apiResponse = await _repo.UpdateProfileImage(proImage,userid);
+                return Ok(apiResponse);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+        //for retrive the Profile Image
+        [HttpGet("getProfileImage")]
+        public IActionResult GetProfileImage(string fileName)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(fileName))
+                    return BadRequest("Filename is not provided.");
+                var filePath = Path.Combine(_env.WebRootPath, "Media/ProfileImage", fileName);
+                if (!System.IO.File.Exists(filePath))
+                {
+                    return NotFound();
+                }
+                var fileExtension = Path.GetExtension(fileName).ToLower();
+
+                string contentType = fileExtension switch
+                {
+                    ".jpg" or ".jpeg" => "image/jpeg",
+                    ".png" => "image/png",
+                    ".gif" => "image/gif",
+                    _ => "application/octet-stream",
+                };
+
+                var bytes = System.IO.File.ReadAllBytes(filePath);
+
+                return File(bytes, contentType);
             }
             catch (Exception ex)
             {

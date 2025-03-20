@@ -19,5 +19,7 @@ namespace SportifyKerala.IRepo
 
         public Task<Users> GetOwnProfile(Guid uid); //For gettig own data
 
+        public Task<APIResponse<bool>> UpdateProfileImage(UpdateProfileImageDto proImage,Guid id);  //for update the username of the user
+
     }
 }

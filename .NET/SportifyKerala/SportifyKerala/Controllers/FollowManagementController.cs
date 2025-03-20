@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SportifyKerala.Dto;
 using SportifyKerala.IRepo;
+using SportifyKerala.Models;
 
 namespace SportifyKerala.Controllers
 {
@@ -102,6 +103,49 @@ namespace SportifyKerala.Controllers
                     return Unauthorized("JWT GENERATION ERROR");
                 }
                 var apiResponse = await _repo.RejectRequest(userid,clubid);
+                return Ok(apiResponse);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+        //nammalk oru aalde post kanumbo avde aale follow cheyyaninfo ellayo, ellenkil aale follow cheyan pattanan poole
+        [Authorize]
+        [HttpGet("CheckFollowOrNot")]
+        public async Task<IActionResult> CheckFollowOrNot(Guid clubid)
+        {
+            try
+            {
+                var userIdClaim = HttpContext.User.FindFirst(JwtRegisteredClaimNames.Sid);
+                if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out Guid userid))
+                {
+                    return Unauthorized("JWT GENERATION ERROR");
+                }
+                var apiResponse = await _repo.CheckFollowOrNot(clubid, userid);
+                return Ok(apiResponse);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+
+        //to get the no of follow requests we have
+        [Authorize]
+        [HttpGet("GetNoOfFollowRequests")]
+        public async Task<IActionResult> FollowRequests()
+        {
+            try
+            {
+                var clubIdClaim = HttpContext.User.FindFirst(JwtRegisteredClaimNames.Sid);
+                if (clubIdClaim == null || !Guid.TryParse(clubIdClaim.Value, out Guid clubid))
+                {
+                    return Unauthorized("JWT GENERATION ERROR");
+                }
+                var apiResponse = await _repo.FollowRequests(clubid);
                 return Ok(apiResponse);
             }
             catch (Exception ex)
